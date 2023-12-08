@@ -30,6 +30,9 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+
 def generaQR(link : str) -> InputFile:    
 
     qr = qrcode.QRCode(
@@ -42,7 +45,7 @@ def generaQR(link : str) -> InputFile:
     qr.make(fit=True)
 
     # Usa SvgPathImage per generare un QR code in formato SVG
-    img = qr.make_image(image_factory=SvgPathImage, embeded_image_path="./Images/Ingegneria.png", fill_color="black", back_color="Transparent")
+    img = qr.make_image(image_factory=SvgPathImage, embeded_image_path="./Images/Ingegneria.png", fill_color="Black", back_color="Transparent")
     
     img_byte_array = BytesIO()
     
@@ -57,9 +60,8 @@ def generaQR(link : str) -> InputFile:
     # Restituisci l'oggetto BytesIO contenente il contenuto SVG
     return InputFile(open(temp_file.name, 'rb'), filename="TuoQRCode.svg")
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Ciao! Usa /creaqr <link> per creare un QR code!")
+    await update.message.reply_text("Ciao! Usa /creaqr <link o stringa> per creare un QR code!")
 
 async def creaQR(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
@@ -76,6 +78,18 @@ async def creaQR(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         await update.effective_message.reply_text("Uso: /creaqr <link>")
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    """Log the error and send a telegram message to notify the developer."""
+
+    # Log the error before we do anything else, so we can see it even if something breaks.
+
+    logger.error("Exception while handling an update:", exc_info=context.error)
+
+    # Finally, send the message
+
+    await update.effective_message.reply_text("C'è stato un errore imprevisto, per piacere riprova.\nSe l'errore persiste, aprire una issue su github al link: https://github.com/Deltekk/VivereQR")
+
 def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
@@ -85,8 +99,11 @@ def main() -> None:
     application.add_handler(CommandHandler(["start"], start))
     application.add_handler(CommandHandler("creaqr", creaQR))
 
+    application.add_error_handler(error_handler)
+
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
+
 
 if __name__ == "__main__":
     main()
