@@ -1,14 +1,11 @@
 import tempfile
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, filters
 from telegram import Update, InputFile
-from configs import LoadConfigs, GetToken
+from Modules.configs import LoadConfigs, GetToken
 from io import BytesIO
 import logging, qrcode
-from PIL import Image, ImageDraw
-from qrcode.image import svg
-import base64
+
 from qrcode.image.svg import SvgPathImage
-import svgwrite
 
 from qrcode.image.styledpil import StyledPilImage
 from qrcode.image.styles.moduledrawers.svg import SvgPathSquareDrawer
@@ -45,7 +42,7 @@ def generaQR(link : str) -> InputFile:
     qr.make(fit=True)
 
     # Usa SvgPathImage per generare un QR code in formato SVG
-    img = qr.make_image(image_factory=StyledPilImage, embeded_image_path="./images/ateneo.png", fill_color="black", back_color="Transparent",)
+    img = qr.make_image(image_factory=SvgPathImage, embeded_image_path="./Images/Ingegneria.png", fill_color="black", back_color="Transparent")
     
     img_byte_array = BytesIO()
     
@@ -54,11 +51,11 @@ def generaQR(link : str) -> InputFile:
     img_byte_array.seek(0)
 
     # Opzionalmente, puoi anche scrivere il contenuto SVG in un file
-    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as temp_file:
         temp_file.write(img_byte_array.getvalue())
 
     # Restituisci l'oggetto BytesIO contenente il contenuto SVG
-    return InputFile(open(temp_file.name, 'rb'), filename="TuoQRCode.png")
+    return InputFile(open(temp_file.name, 'rb'), filename="TuoQRCode.svg")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
